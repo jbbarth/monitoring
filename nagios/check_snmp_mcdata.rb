@@ -37,7 +37,7 @@ exclusions = (ARGV.shift || "").split(",")
 command="snmpwalk -c #{community} -v 2c #{host} .1.3.6.1.4.1.289.2.1.1.2.3.1.1.2"
 debug "command: #{command}"
 result = []
-IO.popen(command).readlines.each do |line|
+IO.popen(command).readlines.map{|l|l.chomp}.each do |line|
   debug "snmpwalk result: #{line}"
   matches = line.match /\.(\d+) = INTEGER: (\d+)/
   result.push [matches[1], matches[2]]
