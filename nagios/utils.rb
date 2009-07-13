@@ -7,5 +7,9 @@ STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 
 def debug(msg="")
-  puts msg if DEBUG
+  begin
+    puts msg if DEBUG
+  rescue
+    #in case DEBUG is not defined
+  end
 end
