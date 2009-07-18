@@ -78,7 +78,7 @@ def readconf(file)
       (b.match(/^\s*$/) ? nil : b)
     end.compact
   rescue
-    puts "ERROR: Unable to read #{file} : #{$!}"
+    $stderr.puts "ERROR: Unable to read #{file} : #{$!}"
     exit STATE_UNKNOWN
   end
 end
@@ -89,7 +89,7 @@ def getinteger(arg)
   if arg.match(/^\d+$/)
     arg.to_i
   else
-    puts "ERROR: Not a number : #{arg}"
+    $stderr.puts "ERROR: Not a number : #{arg}"
     exit STATE_UNKNOWN
   end
 end
@@ -109,7 +109,7 @@ opts.each do |opt, arg|
       if File.readable?(arg)
         nagiosconf = arg
       else
-        puts "ERROR: Supplied nagios config file #{arg} is not readable."
+        $stderr.puts "ERROR: Supplied nagios config file #{arg} is not readable."
         exit STATE_UNKNOWN
       end
     when '--subnet'
@@ -131,14 +131,14 @@ excepts.flatten!
 
 # In case of no subnet given
 if subnets.length == 0
-  puts "ERROR: No subnet given !"
-  puts "Run #{$0} --help"
+  $stderr.puts "ERROR: No subnet given !"
+  $stderr.puts "Run #{$0} --help"
   exit STATE_UNKNOWN
 end
 
 # Check fping is installed
 unless File.executable?(fping)
-  puts "ERROR: #{fping} is not here or not executable ; is it installed?"
+  $stderr.puts "ERROR: #{fping} is not here or not executable ; is it installed?"
   exit STATE_UNKNOWN
 end
 
