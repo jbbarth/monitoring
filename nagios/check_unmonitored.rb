@@ -75,7 +75,7 @@ def readconf(file)
   begin
     File.readlines(file).map do |a|
       b = a.chomp.split.first.gsub(/#.*/,'')
-      (b.match(/^\s*$/)  ? nil : b)
+      (b.match(/^\s*$/) ? nil : b)
     end.compact
   rescue
     puts "ERROR: Unable to read #{file} : #{$!}"
@@ -182,7 +182,7 @@ debug "Detected monitored: #{monitored.join("\n")}"
 missing = Array.new
 servers.each do |s|
   unless monitored.include?(s) || excepts.include?(s)
-    puts "  unmonitored: #{s}"
+    debug "  unmonitored: #{s}"
     if resolve
       debug "  dns resolution: #{s}"
       host = `getent hosts #{s}`
