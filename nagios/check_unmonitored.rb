@@ -5,12 +5,12 @@
 # 
 # Author: Jean-Baptiste BARTH <jeanbaptiste.barth@gmail.com>
 #
-# The script compares a list of subnets or ips to scan (given 
-# with -s or -S option), and compares it to machines monitored 
-# by parsing Nagios config file. The machine is then considered 
-# as unmonitored unless IP is in exception list (given with -e 
-# or -E option). WARNING: this scripts needs "fping" in order to 
-# scan the network.
+# The script takes a list of subnets or ips to scan (given with
+# -s or -S option), and compares it to machines monitored by 
+# parsing Nagios config file. The machine is then considered as
+# unmonitored unless IP is in exception list (given with -e or -E
+# option). WARNING: this scripts needs "fping" in order to scan
+# the network.
 #
 # Usage: check_unmonitored.rb [options], where options can be:
 #   Nagios return options:
