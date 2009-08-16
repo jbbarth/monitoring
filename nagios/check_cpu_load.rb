@@ -17,7 +17,20 @@
 PROGNAME=File.basename($0)
 PROGPATH=File.dirname($0)
 DEBUG=false
+#max integer for Counter32 snmp counters
 LIMIT32=(2 ** 32)
+
+#MAX_CYCLES: maximum number of cycles in the main loop
+#the scripts waits 1 second between each cycle, so if set to 15,
+#you can estimate the script won't take more than 15 or 16 seconds
+#to exit
+MAX_CYCLES=15
+
+#MIN_THICKS: the scripts tries to wait for a certain amount of cpu
+#cycles (thicks) ; it can exit before if it exceeds MAX_CYCLES cycles,
+#but otherwise, it will perform a new snmp check until MIN_THICKS is
+#reached
+MIN_THICKS=2000
 
 #loading useful variables/methods
 load File.join(File.dirname($0),'utils.rb')
@@ -44,16 +57,14 @@ end
 host = ARGV.shift
 limits = (ARGV.shift || "80,90").split(",")
 community = ARGV.shift || "public"
-min_ticks = 2000
-max_cycle = 15
 
 #retrieving snmp informations
 command="snmpwalk -c #{community} -v 2c #{host} .1.3.6.1.4.1.2021.11"
 snmp = {}
-ticks = 0
+thicks = 0
 cycle = 0
 
-while cycle < max_cycle && ticks < min_ticks do
+while cycle < MAX_CYCLES && thicks < MIN_THICKS do
   debug "running command (cycle #{cycle}): #{command}"
   sleep 1 unless cycle == 0
   IO.popen(command).readlines.grep(/ssCpuRaw/).each do |line|
@@ -66,8 +77,8 @@ while cycle < max_cycle && ticks < min_ticks do
       snmp[res.first] = {:current => res[1].to_i, :delta => 0}
     end
   end
-  ticks = snmp.values.inject(0){|sum,n| sum + n[:delta]} unless cycle == 0
-  debug "total ticks: #{ticks}"
+  thicks = snmp.values.inject(0){|sum,n| sum + n[:delta]} unless cycle == 0
+  debug "total thicks: #{thicks}"
   cycle += 1
 end
 
@@ -76,7 +87,7 @@ snmp.each_pair do |key,value|
   new_key = key.scan(/ssCpuRaw(.*)/).join
   new_new_key = new_key.gsub(/.\d+/,"")
   new_key = new_new_key unless percents[new_new_key]
-  percents[new_key] = value[:delta].to_f * 100 / ticks.to_f
+  percents[new_key] = value[:delta].to_f * 100 / thicks.to_f
 end
 debug "percents: #{percents.to_a.inspect}"
 #[["Interrupt", "0.00"], ["Wait", "0.17"], ["System", "0.00"], ["User", "0.00"], ["Nice", "0.00"], ["Kernel", "0.00"], ["SoftIRQ", "0.00"], ["Idle", "33.17"]]
@@ -88,8 +99,8 @@ cpu_used = 100 - percents["Idle"]
 result = percents.delete_if{|k,v| !k.match /User|System|Nice|Idle|Wait/ }.to_a.map{|a| %Q(#{a[0]}=#{"%.2f" % a[1]}%)}.join(", ")
 
 #output and exit state
-if ticks == 0
-  puts "CPU Used UNKNOWN: maybe you should tune max_cycle and/or min_ticks settings"
+if thicks == 0
+  puts "CPU Used UNKNOWN: maybe you should tune max_cycle and/or min_thicks settings"
   exit STATE_UNKNOWN
 elsif cpu_used > limits[1].to_f
   puts "CPU Used CRITICAL: #{'%.2f' % cpu_used}% > #{limits[1]} | #{result}"
