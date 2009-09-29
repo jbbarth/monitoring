@@ -41,7 +41,6 @@ PROGPATH=File.dirname($0)
 
 # Useful libs
 require 'getoptlong'
-require 'rdoc/usage'
 
 # Useful variables/methods
 load File.join(File.dirname($0),'utils.rb')
@@ -94,11 +93,21 @@ def getinteger(arg)
   end
 end
 
+# Help
+def usage
+  help = File.read($0)
+  help.gsub!(/^#!.*?\n/,"")
+  help.strip.split("\n").each do |line|
+    exit unless line.match(/^\s*#/)
+    puts line.gsub(/^\s*# ?/,"")
+  end
+end
+
 # Effective parsing
 opts.each do |opt, arg|
   case opt
     when '--help'
-      RDoc::usage
+      usage
     when '--critical'
       critical = getinteger(arg)
     when '--warning'
