@@ -63,7 +63,8 @@ opts = GetoptLong.new(
 # Default options
 critical = 10
 warning = 0
-fping="/usr/bin/fping"
+fping=IO.popen("which fping").read.chomp
+fping="/usr/bin/fping" if fping.empty?
 nagiosconf = "/etc/nagios/hosts.cfg"
 subnets = Array.new
 excepts = Array.new
