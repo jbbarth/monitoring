@@ -24,6 +24,8 @@
 #     -e, --except <ip1,ip2,...>
 #     -E, --exceptfile <path/to/except.txt> (one ip per line, comments allowed)
 #     --no-dns : do not perform DNS resolution
+#     --strategy <binary> : the name of the binary to use for scanning subnets,
+#                           without its path (can be "fping" or "nmap")
 #   Other:
 #     -h, --help (display this help)
 #
@@ -34,6 +36,7 @@
 #   -n : /etc/nagios/hosts.cfg
 #   -c : 10
 #   -w : 0
+#   --strategy : nmap
 
 # Common constants
 PROGNAME=File.basename($0)
@@ -55,6 +58,7 @@ opts = GetoptLong.new(
   [ '--subnetfile', '-S', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--except', '-e', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--exceptfile', '-E', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--strategy', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--no-dns', GetoptLong::NO_ARGUMENT ],
   [ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
   [ '--help', '-h', GetoptLong::NO_ARGUMENT ]
@@ -130,6 +134,8 @@ opts.each do |opt, arg|
       excepts << arg.explode(",")
     when '--exceptfile'
       excepts << readconf(arg)
+    when '--strategy'
+      strategy = arg if %w(fping nmap).include?(arg)
     when '--no-dns'
       resolve = false
     when '--debug'
@@ -159,6 +165,7 @@ debug "Exceptions: #{excepts.inspect}"
 debug "Nagios conf: #{nagiosconf}"
 debug "Warning limit: #{warning}"
 debug "Critical limit: #{critical}"
+debug "Strategy: #{strategy}"
 debug "Command: #{command}"
 
 # Scan the network with fping
