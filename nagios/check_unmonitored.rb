@@ -17,7 +17,7 @@
 #     -c, --critical <N> : if number of unmonitored machines is > N, then exit with a critical status
 #     -w, --warning <N> : else if number of unmonitored machines is > N, then exit with a warning status
 #   Script parameters:
-#     -f, --fping </alternative/path/to/fping>
+#     -p, --path </alternative/path/to/binaries>
 #     -n, --nagiosconf </alternative/path/to/hosts.cfg>
 #     -s, --subnet <subnet1,subnet2,...>
 #     -S, --subnetfile <path/to/subnet.txt> (one network or ip per line, comments allowed)
@@ -30,7 +30,7 @@
 # You have to specify at least one subnet or ip to scan with -s or -S option.
 #
 # Default values are :
-#   -f : /usr/bin/fping
+#   -p : /usr/bin
 #   -n : /etc/nagios/hosts.cfg
 #   -c : 10
 #   -w : 0
@@ -49,7 +49,7 @@ load File.join(File.dirname($0),'utils.rb')
 opts = GetoptLong.new(
   [ '--critical', '-c', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--warning', '-w', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--fping', '-f', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--path', '-p', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--nagiosconf', '-n', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--subnet', '-s', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--subnetfile', '-S', GetoptLong::REQUIRED_ARGUMENT ],
@@ -63,8 +63,8 @@ opts = GetoptLong.new(
 # Default options
 critical = 10
 warning = 0
-fping=IO.popen("which fping").read.chomp
-fping="/usr/bin/fping" if fping.empty?
+strategy="nmap"
+path="/usr/bin"
 nagiosconf = "/etc/nagios/hosts.cfg"
 subnets = Array.new
 excepts = Array.new
@@ -113,8 +113,8 @@ opts.each do |opt, arg|
       critical = getinteger(arg)
     when '--warning'
       warning = getinteger(arg)
-    when '--fping'
-      fping = arg
+    when '--path'
+      path = arg
     when '--nagiosconf'
       if File.readable?(arg)
         nagiosconf = arg
@@ -138,6 +138,7 @@ opts.each do |opt, arg|
 end
 subnets.flatten!
 excepts.flatten!
+command="#{path}/#{strategy}"
 
 # In case of no subnet given
 if subnets.length == 0
@@ -146,9 +147,9 @@ if subnets.length == 0
   exit STATE_UNKNOWN
 end
 
-# Check fping is installed
-unless File.executable?(fping)
-  $stderr.puts "ERROR: #{fping} is not here or not executable ; is it installed?"
+# Check command is installed and executable
+unless File.executable?(command)
+  $stderr.puts "ERROR: #{command} is not here or not executable ; is it installed?"
   exit STATE_UNKNOWN
 end
 
@@ -158,6 +159,7 @@ debug "Exceptions: #{excepts.inspect}"
 debug "Nagios conf: #{nagiosconf}"
 debug "Warning limit: #{warning}"
 debug "Critical limit: #{critical}"
+debug "Command: #{command}"
 
 # Scan the network with fping
 servers = Array.new
@@ -165,9 +167,10 @@ threads = Array.new
 subnets.each do |subnet|
   threads << Thread.new do
     debug "  scanning #{subnet}"
-    res = IO.popen("#{fping} -i 10 -r 1 -g #{subnet} 2>/dev/null | grep 'is alive'")
+    res = IO.popen("#{command} -i 10 -r 1 -g #{subnet} 2>/dev/null | grep 'is alive'") if strategy == "fping"
+    res = IO.popen("#{command} -n -sP #{subnet} 2>/dev/null | grep 'is up'") if strategy == "nmap"
     res.each do |line|
-      line.scan(/(\S+)\s+is alive/) do |m|
+      line.scan(/(\S+)\s+is (?:alive|up)/) do |m|
         debug "  detected #{m.first}"
         servers << m.first
       end
@@ -180,7 +183,7 @@ debug "Detected on the network: #{servers.join("\n")}"
 # Get hosts in Nagios conf
 monitored = Array.new
 f = File.read(nagiosconf)
-f.scan(/define\s+host\s+\{[^}]+\}\s*/m) do |section|
+f.scan(/define\s+host\s*\{[^}]+\}\s*/m) do |section|
   debug "Section:\n#{section}"
   a = section.split(/\n+/).select{|x| x.match(/host_name|address/)}
   a.map!{|x| x.strip}
