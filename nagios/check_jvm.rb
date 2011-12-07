@@ -9,7 +9,7 @@ load File.join(File.dirname($0),'utils.rb')
 
 #help
 def print_usage
-  puts "USAGE: #{PROGNAME} <ip|host:port> [community-string] [warning-cpu,critical-cpu] [warning-heap,critical-heap] [warning-threads,critical-threads]"
+  puts "USAGE: #{PROGNAME} <ip|host:port> [community] [monitor-cpu?,warning-cpu,critical-cpu] [monitor-heap?,warning-heap,critical-heap] [monitor-thread?,warning-threads,critical-threads]"
   puts "  Default values:"
   puts "    community: public"
   puts "    cpu    : 1,25,50  : monitor_cpu = yes (0 for no), warning limit = 25%, critical limit = 50%"
