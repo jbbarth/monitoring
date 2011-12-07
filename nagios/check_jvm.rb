@@ -37,7 +37,7 @@ retval=[]
 
 #cpu check
 if cpu.shift == "1"
-  command = "#{PROGPATH}/check_acai_cpu.rb #{host}:#{port} #{cpu.shift},#{cpu.shift} #{community}"
+  command = "#{PROGPATH}/check_jvm_cpu.rb #{host}:#{port} #{cpu.shift},#{cpu.shift} #{community}"
   debug "command: #{command}"
   IO.popen(command) do |f|
     result = f.read.chomp.split("|")
@@ -51,7 +51,7 @@ end
 
 #heap check
 if heap.shift == "1"
-  command = "#{PROGPATH}/check_acai_memory.sh #{host}:#{port} #{community} #{heap.shift},#{heap.shift}"
+  command = "#{PROGPATH}/check_jvm_memory.sh #{host}:#{port} #{community} #{heap.shift},#{heap.shift}"
   debug "command: #{command}"
   IO.popen(command) do |f|
     result = f.read.chomp.split("|")
@@ -65,7 +65,7 @@ end
 
 #threads check
 if threads.shift == "1"
-  command = "#{PROGPATH}/check_acai_threads.sh #{host}:#{port} #{community} #{threads.shift},#{threads.shift}"
+  command = "#{PROGPATH}/check_jvm_threads.sh #{host}:#{port} #{community} #{threads.shift},#{threads.shift}"
   debug "command: #{command}"
   IO.popen(command) do |f|
     result = f.read.chomp.split("|")
