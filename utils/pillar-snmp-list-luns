@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Usage:
-#  ./pillar-list-luns <IP|hostname>
+#  ./pillar-snmp-list-luns <IP|hostname>
 #
 # Lists all LUNs declared on the specified pillar device, in the following format:
 #   <ip|hostname> <lun_id> <storage_profile> <lun_name>
