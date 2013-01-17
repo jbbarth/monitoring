@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Usage:
+#  ./pillar-list-luns <IP|hostname>
+#
+# Lists all LUNs declared on the specified pillar device, in the following format:
+#   <ip|hostname> <lun_id> <storage_profile> <lun_name>
+#
+# Caches results for 15 mins for performance concerns.
+#
+# LUNs are retrieved with SNMPv2, with "public" community by default. If you use
+# a different community, just declare the "COMMUNITY" environment variable and set
+# it to the right community string.
+
+# Exit if no device
+[ -z "$1" ] && echo "Usage: $0 <IP|hostname>" >&2 && exit 1
+
+# Set some variables (default community=public)
+DEVICE=$1
+COMMUNITY=${COMMUNITY:-public}
+
+# Cache things for 15 mins
+cachetime=$(echo "$(date +%s) - ($(date +%s) % (60*15))" | bc)
+tmpfile=/tmp/pillar-luns-$DEVICE-$cachetime.txt
+
+# If no cache, rebuild it
+if ! test -f "$tmpfile"; then
+  #=> iso.3.6.1.4.1.15548.2.1.2.2.2.1.1.1.13.<id> = STRING: "/<storage_profile>/<lun-name>"
+  snmpwalk -v 2c -c "$COMMUNITY" "$DEVICE" iso.3.6.1.4.1.15548.2.1.2.2.2.1.1.1.13 | while read line; do
+    lun_id=$(echo $line|cut -d"=" -f 1|cut -d"." -f 17)
+    storage_profile=$(echo $line|cut -d"/" -f 2)
+    lun_name=$(echo $line|cut -d"/" -f 3|tr -d '"')
+    echo $DEVICE $lun_id $storage_profile $lun_name
+  done |tee $tmpfile.tmp >/dev/null
+  mv $tmpfile.tmp $tmpfile
+fi
+
+# Cached, yeah!
+cat $tmpfile
+
+# Cleanup old cache files
+ls /tmp/pillar-luns-$DEVICE-*.txt|while read f; do
+  [ "$f" != "$tmpfile" ] && rm -f $f
+done
