@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Usage:
+#  ./pillar-lun-iops <IP|hostname>
+#
+# Returns read/write IOPS informations for all the LUNs of
+# this device.
+#
+# Feel free to build your own wrapper on top of it so that
+# metrics are organized as you want on your Munin instance.
+
+# Exit if no device
+[ -z "$1" ] && echo "Usage: $0 <IP|hostname>" >&2 && exit 1
+
+# Set some variables (default community=public)
+DEVICE=$1
+COMMUNITY=${COMMUNITY:-public}
+
+cd $(dirname $0)
+
+../utils/pillar-snmp-list-luns $DEVICE | while read device lun_id storage_profile lun_name; do
+  iops_read=$(snmpwalk -v 2c -c $COMMUNITY $DEVICE iso.3.6.1.4.1.15548.2.3.8.2.1.2.$lun_id.1 | awk -F'"' '{printf "%.3f",$2}')
+  iops_write=$(snmpwalk -v 2c -c $COMMUNITY $DEVICE iso.3.6.1.4.1.15548.2.3.8.2.1.3.$lun_id.1 | awk -F'"' '{printf "%.3f",$2}')
+  timestamp=$(date +%s)
+  echo "$DEVICE.$lun_name.iops.read $iops_read $timestamp"
+  echo "$DEVICE.$lun_name.iops.read $iops_read $timestamp"
+done
