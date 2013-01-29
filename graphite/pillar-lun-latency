@@ -23,5 +23,5 @@ cd $(dirname $0)
   latency_write=$(snmpwalk -v 2c -c $COMMUNITY $DEVICE iso.3.6.1.4.1.15548.2.3.8.2.1.19.$lun_id.1 | awk -F'"' '{printf "%.3f",$2}')
   timestamp=$(date +%s)
   echo "$DEVICE.$lun_name.latency.read $latency_read $timestamp"
-  echo "$DEVICE.$lun_name.latency.read $latency_read $timestamp"
+  echo "$DEVICE.$lun_name.latency.write $latency_write $timestamp"
 done
