@@ -39,6 +39,6 @@ fi
 cat $tmpfile
 
 # Cleanup old cache files
-ls /tmp/pillar-luns-$DEVICE-*.txt|while read f; do
+ls /tmp/pillar-luns-$(id -un)-$DEVICE-*.txt|while read f; do
   [ "$f" != "$tmpfile" ] && rm -f $f
 done
