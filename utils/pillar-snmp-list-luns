@@ -21,7 +21,7 @@ COMMUNITY=${COMMUNITY:-public}
 
 # Cache things for 15 mins
 cachetime=$(echo "$(date +%s) - ($(date +%s) % (60*15))" | bc)
-tmpfile=/tmp/pillar-luns-$DEVICE-$cachetime.txt
+tmpfile=/tmp/pillar-luns-$(id -un)-$DEVICE-$cachetime.txt
 
 # If no cache, rebuild it
 if ! test -f "$tmpfile"; then
