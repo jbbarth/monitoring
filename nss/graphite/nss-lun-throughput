@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Usage:
+#  ./nss-lun-throughput <IP|hostname>
+#
+# Returns read/write Kbytes on each NSS San Resource
+
+# Exit if no device
+[ -z "$1" ] && echo "Usage: $0 <IP|hostname>" >&2 && exit 1
+
+# Set some variables (default community=public)
+DEVICE=$1
+COMMUNITY=${COMMUNITY:-public}
+
+cd $(dirname $0)
+
+#iso.3.6.1.4.1.7368.3.6.2.1.2.21 = STRING: "ha-vmware-h-cs-01"
+snmpwalk -v 2c -c $COMMUNITY $DEVICE 1.3.6.1.4.1.7368.3.6.2.1.2 | while read line; do
+  lun_id=$(echo $line |cut -d" " -f 1|cut -d"." -f 13)
+  name=$(echo $line |cut -d'"' -f 2)
+  [ "$name" == "" ] && continue
+  kbytes_read=$(snmpwalk -v 2c -c $COMMUNITY $DEVICE 1.3.6.1.4.1.7368.3.6.2.1.7.$lun_id |cut -d" " -f 4)
+  kbytes_write=$(snmpwalk -v 2c -c $COMMUNITY $DEVICE 1.3.6.1.4.1.7368.3.6.2.1.8.$lun_id |cut -d" " -f 4)
+  timestamp=$(date +%s)
+  echo "$DEVICE.$name.kbytes-read $kbytes_read $timestamp"
+  echo "$DEVICE.$name.kbytes-write $kbytes_write $timestamp"
+done
